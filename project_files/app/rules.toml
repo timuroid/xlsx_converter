@@ -1,0 +1,39 @@
+[sheet]
+header_row = 1
+first_data_row = 2
+sap_last_column = "S"
+calculation_date_cell = "AB1"
+
+[filters]
+document_type_column = "Q"
+process_document_type = "DR"
+
+[columns.T]
+header = "Дней просрочки по КК (календарные)"
+role = "overdue_days"
+
+[columns.U]
+header = "% КК"
+role = "penalty_rate"
+
+[columns.V]
+header = "Сумма КК"
+role = "penalty_amount"
+
+[columns.W]
+header = "Сумма закрытия"
+role = "closing_amount"
+
+[inputs]
+payment_date_column = "O"
+clearing_date_column = "P"
+amount_column = "R"
+
+[values]
+penalty_rate = 0.001
+
+[logic]
+fill_base_calculations_for_dr = true
+clear_calculation_cells_for_non_dr = true
+keep_source_filters = false
+unhide_rows_when_clearing_filters = true

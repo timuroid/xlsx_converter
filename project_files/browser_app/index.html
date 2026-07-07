@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Калькулятор КК SAP XLSX</title>
+  </head>
+  <body>
+    <main class="app">
+      <header class="page-header">
+        <div>
+          <h1>Калькулятор КК SAP XLSX</h1>
+        </div>
+      </header>
+
+      <section class="controls">
+        <div class="date-field">
+          <span class="field-label">Дата расчета</span>
+          <div class="date-picker">
+            <input id="calcDate" type="hidden" />
+            <button
+              id="dateTrigger"
+              class="date-trigger"
+              type="button"
+              aria-expanded="false"
+              aria-controls="calendarPopover"
+            >
+              <span id="dateTriggerText"></span>
+              <span class="date-trigger__icon" aria-hidden="true">▾</span>
+            </button>
+            <div id="calendarPopover" class="calendar-popover is-hidden" role="dialog" aria-label="Выбор даты расчета">
+              <div class="calendar-header">
+                <button id="prevMonth" class="calendar-nav" type="button" aria-label="Предыдущий месяц">‹</button>
+                <div id="calendarMonth" class="calendar-month"></div>
+                <button id="nextMonth" class="calendar-nav" type="button" aria-label="Следующий месяц">›</button>
+              </div>
+              <div id="calendarGrid" class="calendar-grid"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="Загрузить XLSX файлы">
+        <input id="fileInput" type="file" accept=".xlsx" multiple />
+        <div class="drop-zone__content">
+          <strong>Перетащите XLSX сюда</strong>
+          <span>или нажмите, чтобы выбрать один или несколько файлов</span>
+        </div>
+      </section>
+
+      <section class="summary">
+        <div>Входные колонки: <code>A:S</code></div>
+        <div>Расчетные колонки: <code>T:W</code></div>
+        <div>Формулы ставятся только для строк <code>Вид документа = DR</code></div>
+      </section>
+
+      <section class="results" aria-live="polite">
+        <div class="results__header">
+          <h2>Файлы</h2>
+          <button id="clearButton" type="button">Очистить список</button>
+        </div>
+        <ul id="fileList" class="file-list"></ul>
+        <div id="bulkActions" class="bulk-actions is-hidden">
+          <button id="downloadAllButton" type="button">Скачать все</button>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,34 @@
+.DS_Store
+Thumbs.db
+
+# Local environment
+.env
+.env.*
+!.env.example
+
+# Node / Vite
+node_modules/
+project_files/browser_app/node_modules/
+project_files/browser_app/dist/
+project_files/browser_app/dist-test/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+project_files/app/.venv/
+
+# Local generated files
+project_files/exports/*
+!project_files/exports/.gitkeep
+
+# Source XLSX files can contain working data. Add anonymized fixtures explicitly if needed.
+Источники/inbox/*
+!Источники/inbox/.gitkeep
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp

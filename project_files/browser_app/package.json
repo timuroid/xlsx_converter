@@ -1,0 +1,21 @@
+{
+  "name": "us-sap-xlsx-browser-calculator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 8002",
+    "build": "tsc && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 8002",
+    "build:test": "vite build --config vite.test.config.ts",
+    "test:transform": "pnpm build && pnpm build:test && node test-browser-transform.mjs"
+  },
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "jszip": "^3.10.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vite": "^7.0.0"
+  }
+}
