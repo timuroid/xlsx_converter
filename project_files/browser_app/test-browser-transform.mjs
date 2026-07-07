@@ -11,6 +11,10 @@ const files = [
 
 for (const file of files) {
   const source = await fs.readFile(file);
+  const sourceWorkbook = new ExcelJS.Workbook();
+  await sourceWorkbook.xlsx.load(source);
+  const sourceWorksheet = sourceWorkbook.worksheets[0];
+
   const result = await convertXlsxBuffer(source.buffer.slice(source.byteOffset, source.byteOffset + source.byteLength), path.basename(file), "2026-07-01");
   const bytes = new Uint8Array(await result.blob.arrayBuffer());
   const workbook = new ExcelJS.Workbook();
@@ -35,7 +39,7 @@ for (const file of files) {
   assertNoVisibleFill(worksheet.getCell("U7"), `${file} U7 fill`);
   assertNoVisibleFill(worksheet.getCell("X7"), `${file} X7 fill`);
   assertNoVisibleFill(worksheet.getCell("AB1"), `${file} AB1 fill`);
-  assertWorksheetHasNoVisibleFills(worksheet, file);
+  assertSourceStylesPreserved(sourceWorksheet, worksheet, file);
   assertEqual(result.stats.drRows, 1013, `${file} DR count`);
 
   console.log(`${path.basename(file)} ok: ${result.outputName}`);
@@ -54,10 +58,27 @@ function assertNoVisibleFill(cell, label) {
   }
 }
 
-function assertWorksheetHasNoVisibleFills(worksheet, label) {
-  worksheet.eachRow((row) => {
-    row.eachCell({ includeEmpty: false }, (cell) => {
-      assertNoVisibleFill(cell, `${label} ${cell.address} fill`);
-    });
-  });
+function assertSourceStylesPreserved(sourceWorksheet, outputWorksheet, label) {
+  const addresses = ["A1", "O1", "Q1", "S1", "A7", "O7", "Q7", "S7"];
+
+  for (const address of addresses) {
+    const sourceStyle = stableStringify(sourceWorksheet.getCell(address).style ?? {});
+    const outputStyle = stableStringify(outputWorksheet.getCell(address).style ?? {});
+    assertEqual(outputStyle, sourceStyle, `${label} ${address} source style`);
+  }
+}
+
+function stableStringify(value) {
+  if (Array.isArray(value)) {
+    return `[${value.map(stableStringify).join(",")}]`;
+  }
+
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`)
+      .join(",")}}`;
+  }
+
+  return JSON.stringify(value);
 }
