@@ -35,6 +35,7 @@ for (const file of files) {
   assertNoVisibleFill(worksheet.getCell("U7"), `${file} U7 fill`);
   assertNoVisibleFill(worksheet.getCell("X7"), `${file} X7 fill`);
   assertNoVisibleFill(worksheet.getCell("AB1"), `${file} AB1 fill`);
+  assertWorksheetHasNoVisibleFills(worksheet, file);
   assertEqual(result.stats.drRows, 1013, `${file} DR count`);
 
   console.log(`${path.basename(file)} ok: ${result.outputName}`);
@@ -51,4 +52,12 @@ function assertNoVisibleFill(cell, label) {
   if (fill?.type && fill.pattern !== "none") {
     throw new Error(`${label}: expected no visible fill, got ${JSON.stringify(fill)}`);
   }
+}
+
+function assertWorksheetHasNoVisibleFills(worksheet, label) {
+  worksheet.eachRow((row) => {
+    row.eachCell({ includeEmpty: false }, (cell) => {
+      assertNoVisibleFill(cell, `${label} ${cell.address} fill`);
+    });
+  });
 }

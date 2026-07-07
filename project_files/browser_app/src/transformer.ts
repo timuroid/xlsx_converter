@@ -113,6 +113,7 @@ function transformWorksheet(worksheet: Worksheet, calcDate: string): ConversionS
   }
 
   applyLayout(worksheet);
+  removeVisibleColors(worksheet);
 
   return {
     dataRows: Math.max(0, lastDataRow - FIRST_DATA_ROW + 1),
@@ -208,6 +209,36 @@ function applyLayout(worksheet: Worksheet): void {
   }
 
   worksheet.autoFilter = undefined;
+}
+
+function removeVisibleColors(worksheet: Worksheet): void {
+  const maxColumn = Math.max(worksheet.columnCount, 28);
+  const maxRow = worksheet.rowCount;
+
+  for (let column = 1; column <= maxColumn; column += 1) {
+    const columnStyle = worksheet.getColumn(column).style;
+    worksheet.getColumn(column).style = withoutVisibleColors(columnStyle);
+  }
+
+  for (let row = HEADER_ROW; row <= maxRow; row += 1) {
+    for (let column = 1; column <= maxColumn; column += 1) {
+      const cell = worksheet.getCell(row, column);
+      cell.style = withoutVisibleColors(cell.style);
+    }
+  }
+}
+
+function withoutVisibleColors(style: Partial<ExcelJS.Style> = {}): Partial<ExcelJS.Style> {
+  const nextStyle: Partial<ExcelJS.Style> = { ...style };
+  delete nextStyle.fill;
+
+  if (nextStyle.font) {
+    const fontWithoutColor: Partial<ExcelJS.Font> = { ...nextStyle.font };
+    delete fontWithoutColor.color;
+    nextStyle.font = fontWithoutColor;
+  }
+
+  return nextStyle;
 }
 
 function findLastDataRow(worksheet: Worksheet): number {
