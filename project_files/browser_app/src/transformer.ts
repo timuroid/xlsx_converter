@@ -25,26 +25,16 @@ const HEADERS: Record<number, string> = {
   21: "% КК",
   22: "Сумма КК",
   23: "Сумма закрытия",
+  24: "К доплате после пересчета платежа:",
+  25: "к доплате в том числе по основному долгу",
+  26: "к доплате в том числе по КК",
+  27: "Количество дней просрочки долга после пересчета",
 };
 
-const CALCULATION_COLUMNS = Object.keys(HEADERS).map(Number);
-
-const HEADER_FILL: ExcelJS.Fill = {
+const FORMULA_COLUMNS = [20, 21, 22, 23];
+const NO_FILL: ExcelJS.Fill = {
   type: "pattern",
-  pattern: "solid",
-  fgColor: { argb: "FFBDD7EE" },
-};
-
-const DATA_FILL: ExcelJS.Fill = {
-  type: "pattern",
-  pattern: "solid",
-  fgColor: { argb: "FFDDEBF7" },
-};
-
-const SERVICE_FILL: ExcelJS.Fill = {
-  type: "pattern",
-  pattern: "solid",
-  fgColor: { argb: "FFE2F0D9" },
+  pattern: "none",
 };
 
 export async function convertXlsxFile(file: File, calcDate: string): Promise<ConvertedWorkbook> {
@@ -118,11 +108,11 @@ function transformWorksheet(worksheet: Worksheet, calcDate: string): ConversionS
       writeBaseFormulas(worksheet, row);
       baseFormulaRows += 1;
     } else {
-      clearColumns(worksheet, row, CALCULATION_COLUMNS);
+      clearColumns(worksheet, row, FORMULA_COLUMNS);
     }
   }
 
-  applyLayout(worksheet, lastDataRow);
+  applyLayout(worksheet);
 
   return {
     dataRows: Math.max(0, lastDataRow - FIRST_DATA_ROW + 1),
@@ -136,16 +126,18 @@ function writeHeaders(worksheet: Worksheet, calcDate: string): void {
     const column = Number(columnAsString);
     const cell = worksheet.getCell(HEADER_ROW, column);
     cell.value = header;
-    cell.fill = HEADER_FILL;
-    cell.alignment = { vertical: "top", wrapText: true };
-    cell.border = thinBorder();
+    cell.style = {
+      alignment: { vertical: "top", wrapText: true },
+      fill: NO_FILL,
+    };
   }
 
   const calcDateCell = worksheet.getCell("AB1");
   calcDateCell.value = parseLocalDate(calcDate);
-  calcDateCell.numFmt = "yyyy-mm-dd";
-  calcDateCell.fill = SERVICE_FILL;
-  calcDateCell.border = thinBorder();
+  calcDateCell.style = {
+    fill: NO_FILL,
+    numFmt: "yyyy-mm-dd",
+  };
 }
 
 function writeBaseFormulas(worksheet: Worksheet, row: number): void {
@@ -159,8 +151,10 @@ function writeBaseFormulas(worksheet: Worksheet, row: number): void {
 
   const rateCell = worksheet.getCell(row, 21);
   rateCell.value = PENALTY_RATE;
-  rateCell.numFmt = "0.00%";
-  rateCell.fill = DATA_FILL;
+  rateCell.style = {
+    fill: NO_FILL,
+    numFmt: "0.00%",
+  };
 
   writeFormula(worksheet.getCell(row, 22), `U${row}*T${row}*R${row}`, "#,##0.00");
   writeFormula(worksheet.getCell(row, 23), `V${row}+R${row}`, "#,##0.00");
@@ -168,13 +162,19 @@ function writeBaseFormulas(worksheet: Worksheet, row: number): void {
 
 function writeFormula(cell: ExcelJS.Cell, formula: string, numberFormat: string): void {
   cell.value = { formula };
-  cell.numFmt = numberFormat;
-  cell.fill = DATA_FILL;
+  cell.style = {
+    fill: NO_FILL,
+    numFmt: numberFormat,
+  };
 }
 
 function removeExistingCalculationCells(worksheet: Worksheet, lastDataRow: number): void {
   const maxColumn = Math.max(worksheet.columnCount, 28);
   const maxRow = Math.max(worksheet.rowCount, lastDataRow);
+
+  for (let column = 20; column <= maxColumn; column += 1) {
+    worksheet.getColumn(column).style = {};
+  }
 
   for (let row = HEADER_ROW; row <= maxRow; row += 1) {
     const columns = Array.from({ length: maxColumn - 19 }, (_, index) => index + 20);
@@ -186,30 +186,25 @@ function clearColumns(worksheet: Worksheet, row: number, columns: number[]): voi
   for (const column of columns) {
     const cell = worksheet.getCell(row, column);
     cell.value = null;
-    cell.style = {};
+    cell.style = { fill: NO_FILL };
   }
 }
 
-function applyLayout(worksheet: Worksheet, lastDataRow: number): void {
+function applyLayout(worksheet: Worksheet): void {
   const widths: Record<number, number> = {
     20: 18,
     21: 10,
     22: 14,
     23: 14,
+    24: 18,
+    25: 18,
+    26: 14,
+    27: 18,
     28: 12,
   };
 
   for (const [columnAsString, width] of Object.entries(widths)) {
     worksheet.getColumn(Number(columnAsString)).width = width;
-  }
-
-  for (let row = FIRST_DATA_ROW; row <= lastDataRow; row += 1) {
-    for (const column of CALCULATION_COLUMNS) {
-      const cell = worksheet.getCell(row, column);
-      if (normalizedCellValue(cell) != null || cell.formula) {
-        cell.fill = DATA_FILL;
-      }
-    }
   }
 
   worksheet.autoFilter = undefined;
@@ -252,15 +247,6 @@ function normalizedCellValue(cell: ExcelJS.Cell): unknown {
 function parseLocalDate(value: string): Date {
   const [year, month, day] = value.split("-").map(Number);
   return new Date(year, month - 1, day);
-}
-
-function thinBorder(): Partial<ExcelJS.Borders> {
-  return {
-    top: { style: "thin", color: { argb: "FF808080" } },
-    bottom: { style: "thin", color: { argb: "FF808080" } },
-    left: { style: "thin", color: { argb: "FF808080" } },
-    right: { style: "thin", color: { argb: "FF808080" } },
-  };
 }
 
 function buildOutputName(sourceName: string): string {

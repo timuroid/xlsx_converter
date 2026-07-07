@@ -33,39 +33,6 @@ body {
     #ffffff;
 }
 
-body::before,
-body::after {
-  position: fixed;
-  z-index: 0;
-  content: "";
-  pointer-events: none;
-}
-
-body::before {
-  top: -140px;
-  right: -120px;
-  width: 520px;
-  height: 520px;
-  border: 1px solid rgba(243, 113, 48, 0.16);
-  border-radius: 50%;
-}
-
-body::after {
-  bottom: -180px;
-  left: -140px;
-  width: 620px;
-  height: 620px;
-  background:
-    repeating-linear-gradient(
-      135deg,
-      transparent 0 24px,
-      rgba(243, 113, 48, 0.08) 24px 25px,
-      transparent 25px 48px
-    );
-  -webkit-mask-image: radial-gradient(circle, #000 0 48%, transparent 68%);
-  mask-image: radial-gradient(circle, #000 0 48%, transparent 68%);
-}
-
 .app {
   position: relative;
   z-index: 1;
