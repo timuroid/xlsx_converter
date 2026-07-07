@@ -1,0 +1,8 @@
+services:
+  browser-app:
+    build:
+      context: ./project_files/browser_app
+    image: us-sap-xlsx-kk-calculator:local
+    ports:
+      - "8088:80"
+    restart: unless-stopped

@@ -19,14 +19,16 @@ __pycache__/
 .venv/
 venv/
 project_files/app/.venv/
+project_files/app/
 
-# Local generated files
-project_files/exports/*
-!project_files/exports/.gitkeep
+# Local-only project materials
+project_files/deliverables/
+project_files/exports/
+project_files/management/
+Источники/
 
-# Source XLSX files can contain working data. Add anonymized fixtures explicitly if needed.
-Источники/inbox/*
-!Источники/inbox/.gitkeep
+# Keep only browser app and documentation in Git.
+# Add anonymized fixtures explicitly in a separate tracked fixtures directory if needed.
 
 # Logs and temporary files
 *.log
