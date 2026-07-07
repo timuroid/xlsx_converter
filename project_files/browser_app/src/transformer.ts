@@ -1,4 +1,5 @@
 import * as ExcelJS from "exceljs";
+import JSZip from "jszip";
 
 type Worksheet = ExcelJS.Worksheet;
 
@@ -64,14 +65,38 @@ export async function convertXlsxBuffer(
   workbook.calcProperties.fullCalcOnLoad = true;
 
   const output = await workbook.xlsx.writeBuffer();
+  const patchedOutput = await preserveOriginalColorPalette(buffer, output);
 
   return {
-    blob: new Blob([output], {
+    blob: new Blob([patchedOutput], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     }),
     outputName: buildOutputName(fileName),
     stats,
   };
+}
+
+async function preserveOriginalColorPalette(sourceBuffer: ArrayBuffer, outputBuffer: ExcelJS.Buffer): Promise<ArrayBuffer> {
+  const sourceZip = await JSZip.loadAsync(sourceBuffer);
+  const outputZip = await JSZip.loadAsync(outputBuffer);
+
+  const sourceStyles = await sourceZip.file("xl/styles.xml")?.async("string");
+  const outputStyles = await outputZip.file("xl/styles.xml")?.async("string");
+
+  if (sourceStyles && outputStyles) {
+    const sourceColors = sourceStyles.match(/<colors>[\s\S]*?<\/colors>/)?.[0];
+    if (sourceColors) {
+      const stylesWithoutColors = outputStyles.replace(/<colors>[\s\S]*?<\/colors>/, "");
+      outputZip.file("xl/styles.xml", stylesWithoutColors.replace("</styleSheet>", `${sourceColors}</styleSheet>`));
+    }
+  }
+
+  const sourceTheme = await sourceZip.file("xl/theme/theme1.xml")?.async("uint8array");
+  if (sourceTheme) {
+    outputZip.file("xl/theme/theme1.xml", sourceTheme);
+  }
+
+  return outputZip.generateAsync({ type: "arraybuffer" });
 }
 
 function validateInputHeaders(worksheet: Worksheet): void {

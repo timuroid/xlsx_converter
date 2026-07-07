@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import ExcelJS from "exceljs";
+import JSZip from "jszip";
 import { convertXlsxBuffer } from "./dist-test/transformer-test-entry.mjs";
 
 const projectRoot = path.resolve("../..");
@@ -40,6 +41,7 @@ for (const file of files) {
   assertNoVisibleFill(worksheet.getCell("X7"), `${file} X7 fill`);
   assertNoVisibleFill(worksheet.getCell("AB1"), `${file} AB1 fill`);
   assertSourceStylesPreserved(sourceWorksheet, worksheet, file);
+  await assertColorPalettePreserved(source, bytes, file);
   assertEqual(result.stats.drRows, 1013, `${file} DR count`);
 
   console.log(`${path.basename(file)} ok: ${result.outputName}`);
@@ -81,4 +83,16 @@ function stableStringify(value) {
   }
 
   return JSON.stringify(value);
+}
+
+async function assertColorPalettePreserved(sourceBytes, outputBytes, label) {
+  const sourceZip = await JSZip.loadAsync(sourceBytes);
+  const outputZip = await JSZip.loadAsync(outputBytes);
+  const sourceStyles = await sourceZip.file("xl/styles.xml")?.async("string");
+  const outputStyles = await outputZip.file("xl/styles.xml")?.async("string");
+
+  const sourceColors = sourceStyles?.match(/<colors>[\s\S]*?<\/colors>/)?.[0];
+  if (sourceColors && !outputStyles?.includes(sourceColors)) {
+    throw new Error(`${label}: original indexed color palette was not preserved`);
+  }
 }
