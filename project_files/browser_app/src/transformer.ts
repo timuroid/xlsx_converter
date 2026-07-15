@@ -32,7 +32,7 @@ const HEADERS: Record<number, string> = {
   27: "Количество дней просрочки долга после пересчета",
 };
 
-const FORMULA_COLUMNS = [20, 21, 22, 23];
+const CALCULATION_COLUMNS = [20, 21, 22, 23, 24, 25, 26, 27];
 const NO_FILL: ExcelJS.Fill = {
   type: "pattern",
   pattern: "none",
@@ -131,9 +131,12 @@ function transformWorksheet(worksheet: Worksheet, calcDate: string): ConversionS
     if (documentType === PROCESS_DOCUMENT_TYPE) {
       drRows += 1;
       writeBaseFormulas(worksheet, row);
+      if (shouldWriteRecalculationFormulas(worksheet, row)) {
+        writeRecalculationFormulas(worksheet, row);
+      }
       baseFormulaRows += 1;
     } else {
-      clearColumns(worksheet, row, FORMULA_COLUMNS);
+      clearColumns(worksheet, row, CALCULATION_COLUMNS);
     }
   }
 
@@ -185,6 +188,20 @@ function writeBaseFormulas(worksheet: Worksheet, row: number): void {
   writeFormula(worksheet.getCell(row, 23), `V${row}+R${row}`, "#,##0.00");
 }
 
+function shouldWriteRecalculationFormulas(worksheet: Worksheet, row: number): boolean {
+  const paymentDate = dateFromCellValue(normalizedCellValue(worksheet.getCell(row, 15)));
+  const clearingDate = dateFromCellValue(normalizedCellValue(worksheet.getCell(row, 16)));
+
+  return Boolean(paymentDate && clearingDate && daysBetween(clearingDate, paymentDate) > 0);
+}
+
+function writeRecalculationFormulas(worksheet: Worksheet, row: number): void {
+  writeFormula(worksheet.getCell(row, 27), `MAX(0,$AB$1-P${row})`, "0");
+  writeFormula(worksheet.getCell(row, 25), `V${row}`, "#,##0.00");
+  writeFormula(worksheet.getCell(row, 26), `AA${row}*U${row}*Y${row}`, "#,##0.00");
+  writeFormula(worksheet.getCell(row, 24), `Y${row}+Z${row}`, "#,##0.00");
+}
+
 function writeFormula(cell: ExcelJS.Cell, formula: string, numberFormat: string): void {
   cell.value = { formula };
   cell.style = {
@@ -213,6 +230,20 @@ function clearColumns(worksheet: Worksheet, row: number, columns: number[]): voi
     cell.value = null;
     cell.style = { fill: NO_FILL };
   }
+}
+
+function dateFromCellValue(value: unknown): Date | null {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value;
+  }
+
+  return null;
+}
+
+function daysBetween(later: Date, earlier: Date): number {
+  const laterUtc = Date.UTC(later.getUTCFullYear(), later.getUTCMonth(), later.getUTCDate());
+  const earlierUtc = Date.UTC(earlier.getUTCFullYear(), earlier.getUTCMonth(), earlier.getUTCDate());
+  return Math.round((laterUtc - earlierUtc) / 86_400_000);
 }
 
 function applyLayout(worksheet: Worksheet): void {

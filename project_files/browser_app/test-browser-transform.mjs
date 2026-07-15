@@ -33,6 +33,10 @@ for (const file of files) {
   assertEqual(worksheet.getCell("Y7").formula, undefined, `${file} Y7`);
   assertEqual(worksheet.getCell("Z7").formula, undefined, `${file} Z7`);
   assertEqual(worksheet.getCell("AA7").formula, undefined, `${file} AA7`);
+  assertEqual(worksheet.getCell("X20").formula, "Y20+Z20", `${file} X20`);
+  assertEqual(worksheet.getCell("Y20").formula, "V20", `${file} Y20`);
+  assertEqual(worksheet.getCell("Z20").formula, "AA20*U20*Y20", `${file} Z20`);
+  assertEqual(worksheet.getCell("AA20").formula, "MAX(0,$AB$1-P20)", `${file} AA20`);
   assertEqual(worksheet.getCell("T2").formula, undefined, `${file} T2`);
   assertNoVisibleFill(worksheet.getCell("T1"), `${file} T1 fill`);
   assertNoVisibleFill(worksheet.getCell("X1"), `${file} X1 fill`);
